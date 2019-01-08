@@ -688,7 +688,7 @@ freshNames :: Int -> NameGen -> ([Name], NameGen)
 freshNames i ngen = freshSeededNames (replicate i (Name "fs?" Nothing 0 Nothing)) ngen
 
 freshId :: Type -> NameGen -> (Id, NameGen)
-freshId = freshSeededId (Name "fs?" Nothing 0 Nothing)
+freshId = freshSeededId (Name ("fs?" :: T.Text) Nothing 0 Nothing)
 
 freshIds :: [Type] -> NameGen -> ([Id], NameGen)
 freshIds ts ngen = 

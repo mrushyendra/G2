@@ -1,12 +1,15 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module G2.Language.Located ( Located (..)
-                                     , Spanning (..)
-                                     , Locatable (..)
-                                     , Spannable (..)
-                                     , topLeft
-                                     , bottomRight
-                                     , combineSpans
-                                     , spanLookup
-                                     , locLookup) where
+                           , Spanning (..)
+                           , Locatable (..)
+                           , Spannable (..)
+                           , topLeft
+                           , bottomRight
+                           , combineSpans
+                           , spanLookup
+                           , locLookup) where
 
 import G2.Language.Naming
 import G2.Language.Syntax

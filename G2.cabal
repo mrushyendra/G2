@@ -98,6 +98,8 @@ library
                        , G2.Interface.Interface
                        , G2.Interface.OutputTypes
 
+                       , G2.Language.Internal.Syntax
+
                        , G2.Liquid.AddCFBranch
                        , G2.Liquid.AddLHTC
                        , G2.Liquid.AddOrdToNum
