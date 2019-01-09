@@ -1,72 +1,60 @@
 {-# LANGUAGE DeriveGeneric #-}
 
--- Defines most of the central language in G2. This language closely resembles Core Haskell.
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
+-- Defines most of the central language in G2 This language closely resembles Core Haskell.
 -- The central datatypes are `Expr` and `Type`.
 module G2.Language.Syntax
     ( module G2.Language.Syntax
+    , module G2.Language.Internal.Syntax
     ) where
 
-import GHC.Generics (Generic)
+import G2.Language.Internal.Syntax
+
 import Data.Hashable
 import qualified Data.Text as T
 
 -- | The native GHC definition states that a `Program` is a list of `Binds`.
 -- This is used only in the initial stages of the translation from GHC Core.
 -- We quickly shift to using a `State`.
-type Program = [Binds]
+type Program = GProgram T.Text
 
 -- | Binds `Id`s to `Expr`s, primarily in @let@ `Expr`s
-type Binds = [(Id, Expr)]
+type Binds = GBinds T.Text
 
 -- | Records a location in the source code
-data Loc = Loc { line :: Int
-               , col :: Int
-               , file :: String } deriving (Show, Eq, Read, Ord, Generic)
+type Loc = GLoc
 
-instance Hashable Loc
+instance Hashable GLoc
 
 -- | Records a span in the source code.
 --
 -- Invariant:
 --
 -- >  file start == file end
-data Span = Span { start :: Loc
-                 , end :: Loc } deriving (Show, Eq, Read, Ord, Generic)
+type Span = GSpan
 
-instance Hashable Span
+instance Hashable GSpan
 
 -- | A name has three pieces: an occurence name, Maybe a module name, and a Unique Id.
-data Name = Name T.Text (Maybe T.Text) Int (Maybe Span) deriving (Show, Read, Generic)
+type Name = GName T.Text
 
 -- | Disregards the Span
-instance Eq Name where
-    Name n m i _ == Name n' m' i' _ = n == n' && m == m' && i == i'
-
--- | Disregards the Span
-instance Ord Name where
-    Name n m i _ `compare` Name n' m' i' _ = (n, m, i) `compare` (n', m', i')
-
--- | Disregards the Span
-instance Hashable Name where
+instance Hashable n => Hashable (GName n) where
     hashWithSalt s (Name n m i _) =
         s `hashWithSalt`
         n `hashWithSalt`
         m `hashWithSalt` i
 
 -- | Pairing of a `Name` with a `Type`
-data Id = Id Name Type deriving (Show, Eq, Read, Generic)
+type Id = GId T.Text
 
-instance Hashable Id
+instance Hashable n => Hashable (GId n)
 
 -- | Indicates the purpose of the a Lambda binding
-data LamUse = TermL -- ^ Binds at the term level 
-            | TypeL -- ^ Binds at the type level
-            deriving (Show, Eq, Read, Generic)
+type LamUse = GLamUse
 
-instance Hashable LamUse
-
-idName :: Id -> Name
-idName (Id name _) = name
+instance Hashable GLamUse
  
 {-| This is the main data type for our expression language.
 
@@ -124,113 +112,53 @@ idName (Id name _) = name
  14. @`Assert` fc b e@ is similar to `Assume`, but asserts the @b@ holds.
      The `Maybe` `FuncCall` allows us to optionally indicate that the
      assertion is related to a specific function. -}
-data Expr = Var Id
-          | Lit Lit
-          | Prim Primitive Type
-          | Data DataCon
-          | App Expr Expr
-          | Lam LamUse Id Expr
-          | Let Binds Expr
-          | Case Expr Id [Alt]
-          | Type Type
-          | Cast Expr Coercion
-          | Coercion Coercion
-          | Tick Tickish Expr
-          | NonDet [Expr]
-          | SymGen Type
-          | Assume (Maybe FuncCall) Expr Expr
-          | Assert (Maybe FuncCall) Expr Expr
-          deriving (Show, Eq, Read, Generic)
+type Expr = GExpr T.Text
 
-instance Hashable Expr
+instance Hashable n => Hashable (GExpr n)
 
 -- | These are known, and G2-augmented operations, over unwrapped
 -- data types such as Int#, Char#, Double#, etc.
 -- Generally, calls to these should actually be created using the functions in:
 --
---    "G2.Language.Primitives"
+--    "GLanguage.Primitives"
 --
 -- And evaluation over literals can be peformed with the functions in:
 --
---     "G2.Execution.PrimitiveEval" 
-data Primitive = Ge
-               | Gt
-               | Eq
-               | Neq
-               | Lt
-               | Le
-               | And
-               | Or
-               | Not
-               | Implies
-               | Iff
-               | Plus
-               | Minus
-               | Mult
-               | Div
-               | DivInt
-               | Quot
-               | Mod
-               | Negate
-               | SqRt
-               | IntToFloat
-               | IntToDouble
-               | FromInteger
-               | ToInteger
-               | ToInt
-               | Error
-               | Undefined
-               | BindFunc
-               deriving (Show, Eq, Read, Generic)
+--     "GExecution.PrimitiveEval" 
+type Primitive = GPrimitive
 
-instance Hashable Primitive
+instance Hashable GPrimitive
 
 -- | Literals for denoting unwrapped types such as Int#, Double#.
-data Lit = LitInt Integer
-         | LitFloat Rational
-         | LitDouble Rational
-         | LitChar Char
-         | LitString String
-         | LitInteger Integer
-         deriving (Show, Eq, Read, Generic)
+type Lit = GLit
 
-instance Hashable Lit
+instance Hashable GLit
 
 -- | Data constructor.
-data DataCon = DataCon Name Type deriving (Show, Eq, Read, Generic)
+type DataCon = GDataCon T.Text
 
-instance Hashable DataCon
+instance Hashable n => Hashable (GDataCon n)
 
 -- | AltMatches.
-data AltMatch = DataAlt DataCon [Id] -- ^ Match a datacon. The number of `Id`s
-                                     -- must match the number of term arguments
-                                     -- for the datacon.
-              | LitAlt Lit
-              | Default
-              deriving (Show, Eq, Read, Generic)
+type AltMatch = GAltMatch T.Text
 
-instance Hashable AltMatch
+instance Hashable n => Hashable (GAltMatch n)
 
 -- | `Alt`s consist of the `AltMatch` that is used to match
 -- them, and the `Expr` that is evaluated provided that the `AltMatch`
 -- successfully matches.
-data Alt = Alt AltMatch Expr deriving (Show, Eq, Read, Generic)
+type Alt = GAlt T.Text
 
-instance Hashable Alt
-
-altMatch :: Alt -> AltMatch
-altMatch (Alt am _) = am
+instance Hashable n => Hashable (GAlt n)
 
 -- | Used in the `TyForAll`, to bind an `Id` to a `Type`
-data TyBinder = AnonTyBndr Type
-              | NamedTyBndr Id
-              deriving (Show, Eq, Read, Generic)
+type TyBinder = GTyBinder T.Text
 
-instance Hashable TyBinder
+instance Hashable n => Hashable (GTyBinder n)
 
-data Coercion = Type :~ Type deriving (Eq, Show, Read, Generic)
+type Coercion = GCoercion T.Text
 
-instance Hashable Coercion
+instance Hashable n => Hashable (GCoercion n)
 
 -- | Types are decomposed as follows:
 -- * Type variables correspond to the aliasing of a type
@@ -240,37 +168,17 @@ instance Hashable Coercion
 -- * Type constructor (see below) application creates an actual type
 -- * For all types
 -- * BOTTOM
-data Type = TyVar Id
-          | TyLitInt 
-          | TyLitFloat 
-          | TyLitDouble
-          | TyLitChar 
-          | TyLitString
-          | TyFun Type Type
-          | TyApp Type Type
-          | TyCon Name Kind
-          | TyForAll TyBinder Type
-          | TyBottom
-          | TYPE
-          | TyUnknown
-          deriving (Show, Eq, Read, Generic)
+type Type = GType T.Text
 
 type Kind = Type
 
-instance Hashable Type
+instance Hashable n => Hashable (GType n)
 
-data Tickish = Breakpoint Span -- ^ A breakpoint for the GHC Debugger
-             | NamedLoc Name -- ^ A G2 specific tick, intended to allow,
-                             -- in concert with a @`Reducer`@, for domain
-                             -- specific modifications to a
-                             -- @`State`@'s tracking field.
-             deriving (Show, Eq, Read, Generic)
+type Tickish = GTickish T.Text
 
-instance Hashable Tickish
+instance Hashable n => Hashable (GTickish n)
 
 -- | Represents a function call, with it's arguments and return value as Expr
-data FuncCall = FuncCall { funcName :: Name
-                         , arguments :: [Expr]
-                         , returns :: Expr } deriving (Show, Eq, Read, Generic)
+type FuncCall = GFuncCall T.Text
 
-instance Hashable FuncCall
+instance Hashable n => Hashable (GFuncCall n)
