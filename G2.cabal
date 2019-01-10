@@ -99,6 +99,7 @@ library
                        , G2.Interface.OutputTypes
 
                        , G2.Language.Internal.Syntax
+                       , G2.Language.Internal.TypeEnv
 
                        , G2.Liquid.AddCFBranch
                        , G2.Liquid.AddLHTC

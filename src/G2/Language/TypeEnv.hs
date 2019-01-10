@@ -3,6 +3,7 @@
 
 module G2.Language.TypeEnv ( ProgramType
                                      , TypeEnv
+                                     , GAlgDataTy (..)
                                      , AlgDataTy (..)
                                      , nameModMatch
                                      , argTypesTEnv
@@ -30,6 +31,11 @@ import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 
+import qualified Data.Text as T
+
+import G2.Language.Internal.TypeEnv
+
+
 type ProgramType = (Name, AlgDataTy)
 
 -- | The type environment maps names of types to their appropriate types. However
@@ -39,6 +45,7 @@ type TypeEnv = M.Map Name AlgDataTy
 
 -- | Algebraic data types are types constructed with parametrization of some
 -- names over types, and a list of data constructors for said type.
+{-
 data AlgDataTy = DataTyCon { bound_ids :: [Id]
                            , data_cons :: [DataCon] }
                | NewTyCon { bound_ids :: [Id]
@@ -47,6 +54,8 @@ data AlgDataTy = DataTyCon { bound_ids :: [Id]
                | TypeSynonym { bound_ids :: [Id]
                              , synonym_of :: Type
                              } deriving (Show, Eq, Read)
+-}
+type AlgDataTy = GAlgDataTy T.Text
 
 nameModMatch :: Name -> TypeEnv -> Maybe Name
 nameModMatch (Name n m _ _) = find (\(Name n' m' _ _) -> n == n' && m == m' ) . M.keys
