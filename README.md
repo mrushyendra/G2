@@ -4,6 +4,33 @@
 G2 performs lazy symbolic execution of Haskell programs to detect state reachability.
 It is capable of generating assertion failure counterexamples and solving for higher-order functions.
 
+For instance, suppose we have a function `add` that sums two `Peano` numbers:
+```
+data Peano = Succ Peano | Zero deriving (Show, Eq)
+
+add :: Peano -> Pehano -> Peano
+add Zero p = p
+add (Succ p) p2 = add p (Succ p2)
+```
+along with the assertion:
+```
+equalsFour :: Peano -> Peano -> Peano -> Bool
+equalsFour _ _ p = toInt p == 4
+```
+When G2 is run as follows:
+```
+cabal run G2 ./tests/Samples/Peano.hs add -- --merge-states --assert equalsFour
+```
+It yields several counterexamples, some of which are illustrated here:
+```
+add (Succ (Succ (Succ Zero))) (Succ (Succ Zero)) = Succ (Succ (Succ (Succ (Succ Zero))))
+add (Succ (Succ (Succ Zero))) Zero = Succ (Succ (Succ Zero))
+add Zero (Succ (Succ (Succ Zero))) = Succ (Succ (Succ Zero))
+add Zero (Succ (Succ Zero)) = Succ (Succ Zero)
+```
+The repository also contains G2Q, which allows haskell constraint programming with Haskell predicates,
+as well as G2QMerge, which is an extension of G2Q that integrates State Merging.
+
 ---
 
 #### Dependencies
@@ -21,8 +48,7 @@ It is capable of generating assertion failure counterexamples and solving for hi
 
   b) Manually pull the base library.  Add a file to the G2 folder, called g2.cfg that contains:
 		`base = /path/to/custom/library`
-
-
+	
 ---
 #### Command line:
 
@@ -34,18 +60,24 @@ It is capable of generating assertion failure counterexamples and solving for hi
 
 `cabal run G2 -- --liquid ./tests/Liquid/Peano.hs --liquid-func add`
 
+###### G2QMerge:
+
+`cabal run G2M` (Assumes that functions to be run are contained in `g2m/Main.hs`)
+
 ###### Arguments:
 
 * `--n` number of reduction steps to run
 * `--max-outputs` number of inputs/results to display
 * `--smt` Pass "z3" or "cvc4" to select a solver [Default: Z3]
 * `--time` Set a timeout in seconds
+* `--merge-states` Enable state merging. (Not compatible with LiquidHaskell)
 
 ---
 
 #### Authors
 * Bill Hallahan (Yale)
 * Anton Xue (Yale)
+* Rushyendra Maganty (Yale)
 * Maxwell Troy Bland (UCSD)
 * Ranjit Jhala (UCSD)
 * Ruzica Piskac (Yale)
