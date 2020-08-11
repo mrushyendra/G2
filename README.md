@@ -8,7 +8,7 @@ For instance, suppose we have a function `add` that sums two `Peano` numbers:
 ```
 data Peano = Succ Peano | Zero deriving (Show, Eq)
 
-add :: Peano -> Pehano -> Peano
+add :: Peano -> Peano -> Peano
 add Zero p = p
 add (Succ p) p2 = add p (Succ p2)
 ```
